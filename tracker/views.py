@@ -1,3 +1,5 @@
+import re
+import json
 import requests as http_requests
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -198,8 +200,6 @@ def dashboard(request):
 
 # ── Track Meals ───────────────────────────────────────────────────────────────
 
-import json
-
 def _draft_key(user_id, date_str):
     """Session key for a user's draft meals for a given date."""
     return f'draft_meals_{user_id}_{date_str}'
@@ -267,7 +267,11 @@ def track_meals(request):
             if not draft:
                 messages.error(request, 'Nothing to save — add some food first!')
             else:
+                inventory_warnings = []
+                items_updated = 0
+
                 for item in draft:
+                    # ── Persist the meal ───────────────────────────────────────
                     DailyMeal.objects.create(
                         user=request.user,
                         name=item['name'],
@@ -275,9 +279,57 @@ def track_meals(request):
                         category=item['category'],
                         meal_date=selected_date,
                     )
+
+                    # ── Smart Inventory Bridge ─────────────────────────────────
+                    # Parse quantity and food name from the draft item name.
+                    # Expected format examples: "300g chicken", "2 eggs", "500 ml milk"
+                    # Strategy: split the name, try to extract a leading numeric token.
+                    raw_name = item['name'].strip()
+                    # Match an optional leading number (int or float) possibly
+                    # attached to letters (e.g. "300g"), followed by the food name.
+                    m = re.match(
+                        r'^(\d+(?:\.\d+)?)\s*(?:g|kg|ml|l|pcs|piece|pieces|x)?\s+(.+)$',
+                        raw_name, re.IGNORECASE
+                    )
+                    if m:
+                        meal_qty   = float(m.group(1))
+                        food_name  = m.group(2).strip()
+                    else:
+                        # No leading quantity found — treat the whole string as
+                        # the food name and deduct 1 unit.
+                        meal_qty  = 1
+                        food_name = raw_name
+
+                    inv_item = InventoryItem.objects.filter(
+                        name__iexact=food_name,
+                        user=request.user,
+                    ).first()
+
+                    if inv_item:
+                        new_qty = float(inv_item.quantity) - meal_qty
+                        if new_qty <= 0:
+                            inv_item.quantity = 0
+                            inventory_warnings.append(inv_item.name)
+                        else:
+                            inv_item.quantity = round(new_qty, 2)
+                        inv_item.save()
+                        items_updated += 1
+
+                # Clear the draft session
                 del request.session[skey]
                 request.session.modified = True
-                messages.success(request, f'✅ {len(draft)} meal(s) saved for {selected_date.strftime("%d %b %Y")}!')
+
+                # ── Build feedback messages ────────────────────────────────────
+                messages.success(
+                    request,
+                    f'✅ {len(draft)} meal(s) saved for '
+                    f'{selected_date.strftime("%d %b %Y")} and Inventory updated!'
+                )
+                for food in inventory_warnings:
+                    messages.warning(
+                        request,
+                        f'⚠️ Warning: You are out of {food}!'
+                    )
 
         return redirect(f'/track-meals/?date={date_str}')
 
