@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MyMeal dashboard – log and track your daily meals and calories.">
+    <title>Dashboard – MyMeal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 55%, #24243e 100%);
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Blobs ──────────────────────────────────────────────── */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(130px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        body::before {
+            width: 500px;
+            height: 500px;
+            background: rgba(124, 58, 237, 0.15);
+            top: -120px;
+            left: -80px;
+        }
+
+        body::after {
+            width: 450px;
+            height: 450px;
+            background: rgba(59, 130, 246, 0.12);
+            bottom: -100px;
+            right: -80px;
+        }
+
+        /* ── Top Navbar ─────────────────────────────────────────── */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.75rem;
+            background: rgba(10, 8, 35, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            box-shadow: 0 3px 12px rgba(124, 58, 237, 0.4);
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-user {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .nav-user strong {
+            color: #c4b5fd;
+        }
+
+        .btn-logout {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.9rem;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 0.5rem;
+            background: rgba(248, 113, 113, 0.08);
+            color: #fca5a5;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s, transform 0.15s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(248, 113, 113, 0.18);
+            border-color: rgba(248, 113, 113, 0.55);
+            transform: translateY(-1px);
+        }
+
+        /* ── App Shell ──────────────────────────────────────────── */
+        .shell {
+            display: flex;
+            min-height: 100vh;
+            padding-top: 62px;
+            /* topbar height */
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Sidebar ────────────────────────────────────────────── */
+        .sidebar {
+            width: 230px;
+            flex-shrink: 0;
+            background: rgba(10, 8, 35, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0.85rem;
+            position: fixed;
+            top: 62px;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-section-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #475569;
+            padding: 0 0.65rem;
+            margin-bottom: 0.5rem;
+            margin-top: 1.25rem;
+        }
+
+        .sidebar-section-label:first-child {
+            margin-top: 0;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.65rem 0.9rem;
+            border-radius: 0.65rem;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #94a3b8;
+            transition: background 0.18s, color 0.18s, transform 0.12s;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(167, 139, 250, 0.1);
+            color: #e2e8f0;
+            transform: translateX(3px);
+        }
+
+        .sidebar-link.active {
+            background: linear-gradient(90deg, rgba(124, 58, 237, 0.3), rgba(59, 130, 246, 0.2));
+            color: #c4b5fd;
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            font-weight: 600;
+        }
+
+        .sidebar-link .icon {
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.07);
+            margin: 1rem 0.65rem;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+        }
+
+        /* ── Main content ───────────────────────────────────────── */
+        .main {
+            flex: 1;
+            margin-left: 230px;
+            padding: 2.25rem 2rem 4rem;
+            min-height: calc(100vh - 62px);
+        }
+
+        /* ── Page title ─────────────────────────────────────────── */
+        .page-header {
+            margin-bottom: 1.75rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: -0.4px;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        .page-header p {
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        /* ── Content panels ─────────────────────────────────────── */
+        .content-panel {
+            display: none;
+            animation: fadeUp 0.3s ease both;
+        }
+
+        .content-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Glass card ─────────────────────────────────────────── */
+        .card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 1.2rem;
+            padding: 1.75rem 2rem;
+            max-width: 640px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #c4b5fd;
+            margin-bottom: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        /* ── Form ───────────────────────────────────────────────── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .form-group label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #64748b;
+        }
+
+        .form-group input {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.6rem;
+            padding: 0.62rem 0.85rem;
+            color: #f1f5f9;
+            font-family: inherit;
+            font-size: 0.92rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input::placeholder {
+            color: #334155;
+        }
+
+        .form-group input:focus {
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18);
+        }
+
+        .btn-submit {
+            grid-column: 1 / -1;
+            margin-top: 0.15rem;
+            padding: 0.7rem;
+            background: linear-gradient(90deg, #7c3aed, #3b82f6);
+            border: none;
+            border-radius: 0.6rem;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.93rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.38);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(124, 58, 237, 0.52);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* ── API Messages ─────────────────────────────────────── */
+        .msg-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            padding: 0.85rem 1.1rem;
+            border-radius: 0.75rem;
+            font-size: 0.88rem;
+            font-weight: 500;
+            max-width: 640px;
+            margin-bottom: 1.2rem;
+            animation: slideIn 0.35s ease both;
+        }
+
+        .msg-banner.success {
+            background: rgba(52, 211, 153, 0.12);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            color: #6ee7b7;
+        }
+
+        .msg-banner.error {
+            background: rgba(248, 113, 113, 0.12);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #fca5a5;
+        }
+
+        /* ── Total calorie banner ───────────────────────────────── */
+        .total-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(90deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.15));
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 0.7rem;
+            padding: 0.75rem 1.1rem;
+            margin-bottom: 1.1rem;
+            font-size: 0.85rem;
+        }
+
+        .total-banner .lbl {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .total-banner .val {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #a78bfa;
+        }
+
+        /* ── Meal list ──────────────────────────────────────────── */
+        .meal-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .meal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 0.7rem;
+            padding: 0.75rem 1rem;
+            transition: background 0.2s, transform 0.15s;
+            animation: slideIn 0.3s ease both;
+        }
+
+        .meal-item:hover {
+            background: rgba(255, 255, 255, 0.09);
+            transform: translateX(4px);
+        }
+
+        .meal-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .meal-name {
+            font-size: 0.93rem;
+            font-weight: 500;
+        }
+
+        .meal-calories {
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.15rem 0.6rem;
+            border-radius: 999px;
+            background: rgba(167, 139, 250, 0.13);
+            color: #c4b5fd;
+            border: 1px solid rgba(167, 139, 250, 0.25);
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: 1px solid rgba(248, 113, 113, 0.25);
+            border-radius: 0.45rem;
+            color: #fca5a5;
+            padding: 0.28rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            flex-shrink: 0;
+            transition: background 0.2s, border-color 0.2s, transform 0.15s;
+        }
+
+        .btn-delete:hover {
+            background: rgba(248, 113, 113, 0.14);
+            border-color: rgba(248, 113, 113, 0.55);
+            transform: scale(1.06);
+        }
+
+        /* ── Empty state ────────────────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 1.75rem 0 0.5rem;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+
+        .empty-state span {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 0.4rem;
+        }
+
+        /* ── Coming-soon placeholder ────────────────────────────── */
+        .coming-soon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 4rem 2rem;
+            color: #475569;
+            text-align: center;
+        }
+
+        .coming-soon .cs-icon {
+            font-size: 3rem;
+        }
+
+        .coming-soon h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        .coming-soon p {
+            font-size: 0.85rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Responsive ─────────────────────────────────────────── */
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 60px;
+                padding: 1rem 0.4rem;
+            }
+
+            .sidebar-link span:not(.icon) {
+                display: none;
+            }
+
+            .sidebar-section-label {
+                display: none;
+            }
+
+            .sidebar-divider {
+                margin: 0.75rem 0.2rem;
+            }
+
+            .main {
+                margin-left: 60px;
+                padding: 1.5rem 1rem 3rem;
+            }
+
+            .nav-user {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── Top bar ── -->
+    <header class="topbar">
+        <a href="{% url 'welcome' %}" class="nav-logo" id="logo-link">
+            <div class="logo-icon">🥗</div>
+            <span class="logo-text">MyMeal</span>
+        </a>
+        <div class="topbar-right">
+            <span class="nav-user">👤 <strong>{{ request.user.username }}</strong></span>
+            <a href="{% url 'logout' %}" class="btn-logout" id="logout-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Log Out
+            </a>
+        </div>
+    </header>
+
+    <div class="shell">
+
+        <!-- ── Sidebar ── -->
+        <aside class="sidebar" id="sidebar">
+
+            <span class="sidebar-section-label">Main</span>
+
+            <button class="sidebar-link active" id="nav-meals" onclick="showPanel('meals', this)">
+                <span class="icon">🍽️</span>
+                <span>My Meal Dashboard</span>
+            </button>
+
+            <button class="sidebar-link" id="nav-history" onclick="showPanel('history', this)">
+                <span class="icon">📅</span>
+                <span>Meal History</span>
+            </button>
+
+            <button class="sidebar-link" id="nav-calories" onclick="showPanel('calories', this)">
+                <span class="icon">🔥</span>
+                <span>Calorie Summary</span>
+            </button>
+
+            <div class="sidebar-divider"></div>
+
+            <span class="sidebar-section-label">Account</span>
+
+            <button class="sidebar-link" id="nav-profile" onclick="showPanel('profile', this)">
+                <span class="icon">👤</span>
+                <span>Profile</span>
+            </button>
+
+            <button class="sidebar-link" id="nav-settings" onclick="showPanel('settings', this)">
+                <span class="icon">⚙️</span>
+                <span>Settings</span>
+            </button>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-divider"></div>
+                <a href="{% url 'logout' %}" class="sidebar-link" id="sidebar-logout-btn">
+                    <span class="icon">🚪</span>
+                    <span>Log Out</span>
+                </a>
+            </div>
+
+        </aside>
+
+        <!-- ── Main Content ── -->
+        <main class="main">
+
+            <!-- ══ Panel: My Meal Dashboard ══ -->
+            <div class="content-panel active" id="panel-meals">
+                <div class="page-header">
+                    <h1>🍽️ My Meal Dashboard</h1>
+                    <p>Log everything you eat and track your daily calories.</p>
+                </div>
+
+                <!-- Django Messages -->
+                {% if messages %}
+                {% for message in messages %}
+                <div class="msg-banner {{ message.tags }}">
+                    {% if message.tags == 'success' %}✅{% else %}⚠️{% endif %}
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <!-- Add Meal -->
+                <div class="card">
+                    <h2>🔍 Analyze &amp; Log Meal <span
+                            style="font-size:0.72rem;font-weight:400;color:#475569;margin-left:0.4rem;">powered by
+                            Edamam</span></h2>
+                    <form method="POST" action="{% url 'dashboard' %}" id="add-meal-form">
+                        {% csrf_token %}
+                        <div class="form-grid">
+                            <!-- Smart input -->
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="meal_name">🤖 Meal Description — API auto-calculates calories</label>
+                                <input type="text" id="meal_name" name="meal_name"
+                                    placeholder="e.g.  300g grilled chicken  •  1 cup oatmeal  •  2 boiled eggs"
+                                    required autocomplete="off">
+                            </div>
+
+                            <!-- Divider -->
+                            <div style="grid-column:1/-1;display:flex;align-items:center;gap:0.75rem;margin:0.25rem 0;">
+                                <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+                                <span style="font-size:0.72rem;color:#475569;font-weight:600;letter-spacing:0.05em;">OR
+                                    — ENTER MANUALLY</span>
+                                <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+                            </div>
+
+                            <!-- Manual fallback -->
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="calories">✏️ Calories (kcal) — fill this to skip the API</label>
+                                <input type="number" id="calories" name="calories"
+                                    placeholder="e.g. 450 — leave blank to use Edamam API" min="0" autocomplete="off">
+                            </div>
+
+                            <button type="submit" class="btn-submit" id="add-meal-btn" style="grid-column: 1 / -1;">🔍
+                                Analyze &amp; Log Meal</button>
+                        </div>
+                    </form>
+                </div>
+
+
+                <!-- Meal List -->
+                <div class="card">
+                    <h2>📋 Today's Meals</h2>
+                    {% if meals %}
+                    <div class="total-banner">
+                        <span class="lbl">Total Calories</span>
+                        <span class="val">{{ total_calories }} kcal</span>
+                    </div>
+                    <ul class="meal-list">
+                        {% for meal in meals %}
+                        <li class="meal-item">
+                            <div class="meal-info">
+                                <span class="meal-name">{{ meal.name }}</span>
+                                <span class="meal-calories">{{ meal.calories }} kcal</span>
+                            </div>
+                            <form method="POST" action="{% url 'delete_meal' meal.id %}" style="margin:0;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-delete" title="Delete meal">🗑 Delete</button>
+                            </form>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="empty-state">
+                        <span>🍽️</span>
+                        No meals logged yet. Add your first meal above!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ══ Panel: Meal History ══ -->
+            <div class="content-panel" id="panel-history">
+                <div class="page-header">
+                    <h1>📅 Meal History</h1>
+                    <p>Review all your past meals in one place.</p>
+                </div>
+                <div class="card">
+                    <div class="coming-soon">
+                        <span class="cs-icon">🚧</span>
+                        <h3>Coming Soon</h3>
+                        <p>Full meal history with filters and date grouping is on the way!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Panel: Calorie Summary ══ -->
+            <div class="content-panel" id="panel-calories">
+                <div class="page-header">
+                    <h1>🔥 Calorie Summary</h1>
+                    <p>Your daily calorie intake at a glance.</p>
+                </div>
+                <div class="card">
+                    {% if meals %}
+                    <div class="total-banner" style="margin-bottom:0;">
+                        <span class="lbl">Total Calories Today</span>
+                        <span class="val">{{ total_calories }} kcal</span>
+                    </div>
+                    {% else %}
+                    <div class="coming-soon">
+                        <span class="cs-icon">📊</span>
+                        <h3>No Data Yet</h3>
+                        <p>Add some meals to see your calorie summary here.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ══ Panel: Profile ══ -->
+            <div class="content-panel" id="panel-profile">
+                <div class="page-header">
+                    <h1>👤 Profile</h1>
+                    <p>Your account information.</p>
+                </div>
+                <div class="card">
+                    <div class="coming-soon">
+                        <span class="cs-icon">👤</span>
+                        <h3>{{ request.user.username }}</h3>
+                        <p>Profile editing coming soon!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Panel: Settings ══ -->
+            <div class="content-panel" id="panel-settings">
+                <div class="page-header">
+                    <h1>⚙️ Settings</h1>
+                    <p>Manage your preferences.</p>
+                </div>
+                <div class="card">
+                    <div class="coming-soon">
+                        <span class="cs-icon">⚙️</span>
+                        <h3>Coming Soon</h3>
+                        <p>Settings and preferences will be available here.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        function showPanel(name, clickedBtn) {
+            document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            document.getElementById('panel-' + name).classList.add('active');
+            clickedBtn.classList.add('active');
+        }
+    </script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="MyMeal – Your personalized meal tracking companion. Log meals, count calories, and reach your health goals.">
+    <title>MyMeal – Personalized Meal Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ── Reset & Base ─────────────────────────────────────────── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --purple: #7c3aed;
+            --blue: #3b82f6;
+            --light-purple: #a78bfa;
+            --soft: #c4b5fd;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --card-bg: rgba(255, 255, 255, 0.06);
+            --border: rgba(255, 255, 255, 0.10);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* ── Animated background blobs ──────────────────────────── */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: 0;
+            pointer-events: none;
+            animation: blobMove 12s ease-in-out infinite alternate;
+        }
+
+        body::before {
+            width: 500px;
+            height: 500px;
+            background: rgba(124, 58, 237, 0.18);
+            top: -120px;
+            left: -120px;
+        }
+
+        body::after {
+            width: 450px;
+            height: 450px;
+            background: rgba(59, 130, 246, 0.15);
+            bottom: -100px;
+            right: -100px;
+            animation-delay: -6s;
+        }
+
+        @keyframes blobMove {
+            from {
+                transform: translate(0, 0) scale(1);
+            }
+
+            to {
+                transform: translate(40px, 30px) scale(1.1);
+            }
+        }
+
+        /* ── Everything above the blobs ────────────────────────── */
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Navbar ─────────────────────────────────────────────── */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.1rem 2.5rem;
+            background: rgba(15, 12, 41, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        /* Logo */
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            text-decoration: none;
+        }
+
+        .nav-logo .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--purple), var(--blue));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.45);
+        }
+
+        .nav-logo span {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, var(--light-purple), var(--blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        /* Nav buttons */
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-nav {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.15rem;
+            border-radius: 0.6rem;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+        }
+
+        /* Login – ghost */
+        #btn-login {
+            background: transparent;
+            border: 1px solid rgba(167, 139, 250, 0.4);
+            color: var(--soft);
+        }
+
+        #btn-login:hover {
+            background: rgba(167, 139, 250, 0.1);
+            border-color: var(--light-purple);
+            transform: translateY(-1px);
+        }
+
+        /* Sign Up – filled gradient */
+        #btn-signup {
+            background: linear-gradient(90deg, var(--purple), var(--blue));
+            border: none;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+        }
+
+        #btn-signup:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.55);
+        }
+
+        /* SVG icons inside buttons */
+        .btn-nav svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        /* ── Hero section ───────────────────────────────────────── */
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 6rem 1.5rem 4rem;
+            max-width: 750px;
+            margin: 0 auto;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(167, 139, 250, 0.12);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            border-radius: 999px;
+            padding: 0.35rem 0.95rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--soft);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 1.75rem;
+            animation: fadeDown 0.6s ease both;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.6rem, 6vw, 4rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1.5px;
+            margin-bottom: 1.25rem;
+            animation: fadeDown 0.6s 0.1s ease both;
+        }
+
+        .hero h1 .gradient-text {
+            background: linear-gradient(90deg, #a78bfa, #60a5fa, #a78bfa);
+            background-size: 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            animation: shimmer 4s linear infinite;
+        }
+
+        @keyframes shimmer {
+            from {
+                background-position: 0% center;
+            }
+
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--muted);
+            line-height: 1.7;
+            max-width: 520px;
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+            animation: fadeDown 0.6s 0.2s ease both;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeDown 0.6s 0.3s ease both;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.85rem 2rem;
+            background: linear-gradient(90deg, var(--purple), var(--blue));
+            border: none;
+            border-radius: 0.75rem;
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.6);
+        }
+
+        .btn-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.85rem 2rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.15s, background 0.2s, border-color 0.2s;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: var(--light-purple);
+            transform: translateY(-1px);
+        }
+
+        /* ── Feature cards ──────────────────────────────────────── */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            max-width: 780px;
+            margin: 4rem auto 5rem;
+            padding: 0 1.5rem;
+            animation: fadeUp 0.7s 0.4s ease both;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1.1rem;
+            padding: 1.5rem 1.35rem;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.09);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 0.97rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            color: var(--soft);
+        }
+
+        .feature-card p {
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.55;
+            font-weight: 300;
+        }
+
+        /* ── Animations ─────────────────────────────────────────── */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Footer ─────────────────────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.78rem;
+            color: #374151;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* ── Responsive ─────────────────────────────────────────── */
+        @media (max-width: 520px) {
+            nav {
+                padding: 1rem 1.25rem;
+            }
+
+            .hero {
+                padding: 4rem 1rem 2.5rem;
+            }
+
+            .btn-nav span {
+                display: none;
+            }
+
+            .btn-nav {
+                padding: 0.5rem 0.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-wrapper">
+
+        <!-- ── Navbar ── -->
+        <nav>
+            <a href="{% url 'welcome' %}" class="nav-logo" id="logo-link">
+                <div class="logo-icon">🥗</div>
+                <span>MyMeal</span>
+            </a>
+
+            <div class="nav-actions">
+                <!-- Login -->
+                <a href="{% url 'login' %}" class="btn-nav" id="btn-login">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        <polyline points="10 17 15 12 10 7" />
+                        <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                    <span>Log In</span>
+                </a>
+
+                <!-- Sign Up -->
+                <a href="{% url 'signup' %}" class="btn-nav" id="btn-signup">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                        <line x1="19" y1="8" x2="19" y2="14" />
+                        <line x1="22" y1="11" x2="16" y2="11" />
+                    </svg>
+                    <span>Sign Up</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- ── Hero ── -->
+        <section class="hero">
+            <div class="badge">✦ Your Health, Simplified</div>
+
+            <h1>
+                Track Every Meal with<br>
+                <span class="gradient-text">MyMeal</span>
+            </h1>
+
+            <p>
+                Log your meals, count your calories, and build healthy habits —
+                all in one beautifully simple place. Start your wellness journey today.
+            </p>
+
+            <div class="hero-cta">
+                <a href="{% url 'signup' %}" class="btn-primary" id="get-started-btn">
+                    🚀 Get Started Free
+                </a>
+                <a href="{% url 'login' %}" class="btn-ghost" id="learn-more-btn">
+                    Log In →
+                </a>
+            </div>
+        </section>
+
+        <!-- ── Feature Cards ── -->
+        <div class="features">
+            <div class="feature-card">
+                <span class="feature-icon">🍽️</span>
+                <h3>Log Meals Instantly</h3>
+                <p>Add any meal in seconds and keep a clear daily record of everything you eat.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🔥</span>
+                <h3>Calorie Tracking</h3>
+                <p>Automatically tally your daily calorie intake and stay within your personal goal.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">📊</span>
+                <h3>Smart Insights</h3>
+                <p>Understand your eating patterns with clear summaries and progress over time.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">�</span>
+                <h3>Goal Setting</h3>
+                <p>Set targets that match your lifestyle and track your journey to better health.</p>
+            </div>
+        </div>
+
+        <!-- ── Footer ── -->
+        <footer>
+            &copy; 2026 MyMeal &mdash; Built with ❤️ using Django
+        </footer>
+
+    </div>
+</body>
+
+</html>

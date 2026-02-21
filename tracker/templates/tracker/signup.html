@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create your free MyMeal account and start tracking your meals today.">
+    <title>Sign Up – MyMeal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* blobs */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(110px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        body::before {
+            width: 450px;
+            height: 450px;
+            background: rgba(124, 58, 237, 0.18);
+            top: -100px;
+            left: -100px;
+        }
+
+        body::after {
+            width: 400px;
+            height: 400px;
+            background: rgba(59, 130, 246, 0.15);
+            bottom: -80px;
+            right: -80px;
+        }
+
+        /* ── Navbar ── */
+        nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.1rem 2.5rem;
+            background: rgba(15, 12, 41, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        .btn-nav-ghost {
+            padding: 0.45rem 1.1rem;
+            border: 1px solid rgba(167, 139, 250, 0.35);
+            border-radius: 0.55rem;
+            color: #c4b5fd;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-nav-ghost:hover {
+            background: rgba(167, 139, 250, 0.1);
+            border-color: #a78bfa;
+        }
+
+        /* ── Page body ── */
+        .page-body {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+        }
+
+        /* ── Auth card ── */
+        .auth-card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 1.35rem;
+            padding: 2.25rem 2.5rem 2.5rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            animation: fadeUp 0.5s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 1.75rem;
+        }
+
+        .auth-icon {
+            font-size: 2.2rem;
+            display: block;
+            margin-bottom: 0.6rem;
+        }
+
+        .auth-header h1 {
+            font-size: 1.65rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        .auth-header p {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 0.3rem;
+        }
+
+        /* ── Form fields ── */
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .field-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .field-wrap label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+        }
+
+        .field-wrap input {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            border-radius: 0.6rem;
+            padding: 0.65rem 0.9rem;
+            color: #f1f5f9;
+            font-family: inherit;
+            font-size: 0.93rem;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .field-wrap input::placeholder {
+            color: #475569;
+        }
+
+        .field-wrap input:focus {
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+        }
+
+        /* Django error list */
+        .errorlist {
+            list-style: none;
+            margin-top: 0.3rem;
+        }
+
+        .errorlist li {
+            font-size: 0.78rem;
+            color: #f87171;
+            padding: 0.25rem 0.6rem;
+            background: rgba(248, 113, 113, 0.1);
+            border-radius: 0.4rem;
+            border: 1px solid rgba(248, 113, 113, 0.2);
+        }
+
+        /* Help text (password hints) */
+        .helptext {
+            font-size: 0.73rem;
+            color: #475569;
+            margin-top: 0.25rem;
+            line-height: 1.4;
+        }
+
+        /* ── Submit button ── */
+        .btn-submit {
+            width: 100%;
+            padding: 0.78rem;
+            background: linear-gradient(90deg, #7c3aed, #3b82f6);
+            border: none;
+            border-radius: 0.65rem;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.97rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.02em;
+            box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 26px rgba(124, 58, 237, 0.55);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* ── Footer link ── */
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.35rem;
+            font-size: 0.83rem;
+            color: #64748b;
+        }
+
+        .auth-footer a {
+            color: #a78bfa;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                padding: 1rem 1.25rem;
+            }
+
+            .auth-card {
+                padding: 1.75rem 1.25rem 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <a href="{% url 'welcome' %}" class="nav-logo" id="logo-link">
+            <div class="logo-icon">🥗</div>
+            <span class="logo-text">MyMeal</span>
+        </a>
+        <a href="{% url 'login' %}" class="btn-nav-ghost" id="nav-login-btn">Log In</a>
+    </nav>
+
+    <!-- Card -->
+    <div class="page-body">
+        <div class="auth-card">
+
+            <div class="auth-header">
+                <span class="auth-icon">🙋</span>
+                <h1>Create Account</h1>
+                <p>Join MyMeal and start tracking your nutrition.</p>
+            </div>
+
+            <form method="POST" id="signup-form">
+                {% csrf_token %}
+                <div class="field-group">
+
+                    {% for field in form %}
+                    <div class="field-wrap">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <ul class="errorlist">
+                            {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                        {% if field.help_text %}
+                        <span class="helptext">{{ field.help_text }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                </div>
+                <button type="submit" class="btn-submit" id="signup-submit-btn">🚀 Create My Account</button>
+            </form>
+
+            <p class="auth-footer">
+                Already have an account? <a href="{% url 'login' %}" id="goto-login-link">Log in here</a>
+            </p>
+
+        </div>
+    </div>
+
+</body>
+
+</html>
