@@ -129,6 +129,31 @@ class UserAllergy(models.Model):
         return self.keyword.capitalize()
 
 
+
+# ── Manager → Resident Messaging ─────────────────────────────────────────────
+
+class ManagerMessage(models.Model):
+    """A message or weekly review sent by a manager to a specific resident."""
+    sender    = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='sent_reviews',
+    )
+    recipient = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='received_reviews',
+    )
+    subject   = models.CharField(max_length=200, default='Weekly Review')
+    body      = models.TextField()
+    is_read   = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{'READ' if self.is_read else 'UNREAD'}] {self.subject} → {self.recipient.username}"
+
+
 # Auto-create a UserProfile whenever a new User is saved.
 @receiver(post_save, sender=User)
 def create_or_save_user_profile(sender, instance, created, **kwargs):

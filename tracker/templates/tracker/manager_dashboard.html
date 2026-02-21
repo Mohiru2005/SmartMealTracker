@@ -656,6 +656,16 @@
                 <span>Manager Panel</span>
             </button>
 
+            <a href="{% url 'patient_food_info' %}" class="sidebar-link" id="nav-food-info">
+                <span class="icon">📊</span>
+                <span>Patient Food Info</span>
+            </a>
+
+            <a href="{% url 'send_weekly_review' %}" class="sidebar-link" id="nav-review">
+                <span class="icon">📨</span>
+                <span>Send Weekly Review</span>
+            </a>
+
             <button class="sidebar-link" id="nav-profile" onclick="showPanel('profile', this)">
                 <span class="icon">👤</span>
                 <span>Manager Profile</span>

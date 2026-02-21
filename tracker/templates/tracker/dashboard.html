@@ -257,11 +257,11 @@
 
         .content-panel {
             display: none;
-            animation: fadeUp 0.3s ease both;
         }
 
         .content-panel.active {
             display: block;
+            animation: fadeUp 0.28s ease both;
         }
 
         @keyframes fadeUp {
@@ -741,13 +741,17 @@
             </a>
             {% endif %}
 
-                        <button class="sidebar-link" id="nav-profile" onclick="showPanel('profile', this)">
-
+            <button class="sidebar-link" id="nav-profile" onclick="showPanel('profile', this)">
                 <span class="icon">👤</span>
-
                 <span>My Profile</span>
-
             </button>
+
+            <a href="{% url 'weekly_review_inbox' %}" class="sidebar-link" id="nav-inbox">
+                <span class="icon">📬</span>
+                <span>Weekly Reviews{% if unread_count %} <span
+                        style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:#3b82f6;color:#fff;font-size:0.6rem;font-weight:800;margin-left:4px;">{{
+                        unread_count }}</span>{% endif %}</span>
+            </a>
 
             <button class="sidebar-link" id="nav-settings" onclick="showPanel('settings', this)">
                 <span class="icon">⚙️</span>
@@ -897,7 +901,8 @@
                     {% if profile.weight_kg and profile.height_cm %}
                     <div class="card" style="padding:1.25rem 1.4rem;margin-bottom:0;" id="bmi-card">
                         <div style="font-size:1.6rem;margin-bottom:0.35rem;">🧮</div>
-                        <div style="font-size:1.7rem;font-weight:800;line-height:1;" id="profile-bmi-val" data-w="{{ profile.weight_kg }}" data-h="{{ profile.height_cm }}">—</div>
+                        <div style="font-size:1.7rem;font-weight:800;line-height:1;" id="profile-bmi-val"
+                            data-w="{{ profile.weight_kg }}" data-h="{{ profile.height_cm }}">—</div>
                         <div
                             style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;color:#64748b;margin-top:0.3rem;">
                             BMI</div>
@@ -976,31 +981,60 @@
     </div>
 
     <script>
-        // Auto-calculate BMI from manager-set stats
-        document.addEventListener('DOMContentLoaded', function() {
-            var valEl = document.getElementById('profile-bmi-val');
-            var catEl = document.getElementById('profile-bmi-cat');
-            if (!valEl || !catEl) return;
-            var w = parseFloat(valEl.getAttribute('data-w'));
-            var h = parseFloat(valEl.getAttribute('data-h'));
-            if (!w || !h || h <= 0) return;
-            var bmi = w / Math.pow(h / 100, 2);
-            var cat = '', color = '#60a5fa';
-            if (bmi < 18.5)      { cat = '🔵 Underweight'; color = '#60a5fa'; }
-            else if (bmi < 25)   { cat = '✅ Normal';       color = '#6ee7b7'; }
-            else if (bmi < 30)   { cat = '🟡 Overweight';  color = '#fcd34d'; }
-            else                 { cat = '🔴 Obese';        color = '#f87171'; }
-            valEl.textContent = bmi.toFixed(1);
-            valEl.style.color = color;
-            catEl.textContent = cat;
-            catEl.style.color = color;
-        });
-
+        // Auto-calculate BMI from manager-set stats
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            var valEl = document.getElementById('profile-bmi-val');
+
+            var catEl = document.getElementById('profile-bmi-cat');
+
+            if (!valEl || !catEl) return;
+
+            var w = parseFloat(valEl.getAttribute('data-w'));
+
+            var h = parseFloat(valEl.getAttribute('data-h'));
+
+            if (!w || !h || h <= 0) return;
+
+            var bmi = w / Math.pow(h / 100, 2);
+
+            var cat = '', color = '#60a5fa';
+
+            if (bmi < 18.5) { cat = '🔵 Underweight'; color = '#60a5fa'; }
+
+            else if (bmi < 25) { cat = '✅ Normal'; color = '#6ee7b7'; }
+
+            else if (bmi < 30) { cat = '🟡 Overweight'; color = '#fcd34d'; }
+
+            else { cat = '🔴 Obese'; color = '#f87171'; }
+
+            valEl.textContent = bmi.toFixed(1);
+
+            valEl.style.color = color;
+
+            catEl.textContent = cat;
+
+            catEl.style.color = color;
+
+        });
+
+
+
         function showPanel(name, clickedBtn) {
-            document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-            document.getElementById('panel-' + name).classList.add('active');
-            clickedBtn.classList.add('active');
+            // Hide all panels
+            document.querySelectorAll('.content-panel').forEach(function (p) {
+                p.classList.remove('active');
+            });
+            // Remove active only from sidebar BUTTONS (not <a> nav links)
+            document.querySelectorAll('.sidebar-link').forEach(function (l) {
+                if (l.tagName === 'BUTTON') l.classList.remove('active');
+            });
+            // Show target panel
+            var panel = document.getElementById('panel-' + name);
+            if (panel) panel.classList.add('active');
+            // Mark clicked button active
+            if (clickedBtn) clickedBtn.classList.add('active');
         }
     </script>
 

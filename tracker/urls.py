@@ -18,4 +18,8 @@ urlpatterns = [
     # ── Manager routes ────────────────────────────────────────────────────────
     path('manager/',                                views.manager_dashboard,         name='manager_dashboard'),
     path('manager/resident/<int:user_id>/',         views.edit_resident_profile,     name='edit_resident_profile'),
+    path('manager/patient-food/',                   views.patient_food_info,         name='patient_food_info'),
+    path('manager/send-review/',                    views.send_weekly_review,        name='send_weekly_review'),
+    # ── Resident routes ───────────────────────────────────────────────────────
+    path('weekly-review/',                          views.weekly_review_inbox,       name='weekly_review_inbox'),
 ]

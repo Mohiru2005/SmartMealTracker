@@ -9,7 +9,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.utils import timezone
-from .models import Meal, InventoryItem, DailyMeal, UserProfile, UserAllergy
+from .models import Meal, InventoryItem, DailyMeal, UserProfile, UserAllergy, ManagerMessage
 from datetime import timedelta
 
 # ── Edamam credentials ────────────────────────────────────────────────────────
@@ -216,11 +216,15 @@ def dashboard(request):
     total_calories = sum(m.calories for m in meals)
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     allergies   = profile.allergies.all()
+    unread_count = ManagerMessage.objects.filter(
+        recipient=request.user, is_read=False
+    ).count()
     context = {
         'meals':          meals,
         'total_calories': total_calories,
         'allergies':      allergies,
         'profile':        profile,
+        'unread_count':   unread_count,
     }
     return render(request, 'tracker/dashboard.html', context)
 
@@ -566,6 +570,154 @@ def edit_resident_profile(request, user_id):
         'allergies': allergies,
     }
     return render(request, 'tracker/edit_resident.html', context)
+
+
+# ── Patient Food Info (Manager) ────────────────────────────────────────────────
+
+@login_required(login_url='login')
+def patient_food_info(request):
+    """Manager views food statistics for a selected resident."""
+    if not request.user.is_staff:
+        messages.error(request, '🚫 Access denied. Manager access only.')
+        return redirect('dashboard')
+
+    residents = (
+        User.objects
+        .filter(is_staff=False, is_superuser=False)
+        .order_by('username')
+    )
+
+    selected_resident = None
+    stats = None
+
+    resident_id = request.GET.get('resident')
+    if resident_id:
+        selected_resident = get_object_or_404(User, id=resident_id, is_staff=False)
+
+        today = timezone.localdate()
+        seven_days_ago = today - timedelta(days=6)
+
+        # ── Daily calories for last 7 days ────────────────────────────────────
+        daily_meals = DailyMeal.objects.filter(
+            user=selected_resident,
+            meal_date__range=[seven_days_ago, today],
+        )
+
+        # Build day-by-day calorie map
+        day_labels = []
+        day_calories = []
+        for i in range(6, -1, -1):
+            day = today - timedelta(days=i)
+            cal = daily_meals.filter(meal_date=day).aggregate(total=Sum('calories'))['total'] or 0
+            day_labels.append(day.strftime('%d %b'))
+            day_calories.append(cal)
+
+        # ── Category breakdown ────────────────────────────────────────────────
+        category_totals = {}
+        for meal in daily_meals:
+            label = meal.get_category_display()
+            category_totals[label] = category_totals.get(label, 0) + meal.calories
+
+        # ── Top foods (most repeated) ─────────────────────────────────────────
+        from django.db.models import Count
+        top_foods = (
+            DailyMeal.objects
+            .filter(user=selected_resident)
+            .values('name')
+            .annotate(count=Count('id'), total_cal=Sum('calories'))
+            .order_by('-count')[:8]
+        )
+
+        # ── Summary numbers ───────────────────────────────────────────────────
+        total_cal_7d   = sum(day_calories)
+        avg_daily_cal  = round(total_cal_7d / 7)
+        total_meals_7d = daily_meals.count()
+        most_active_day = day_labels[day_calories.index(max(day_calories))] if day_calories else '—'
+
+        # ── Recent meal log ───────────────────────────────────────────────────
+        recent_meals = daily_meals.order_by('-meal_date', '-created_at')[:20]
+
+        stats = {
+            'day_labels':      json.dumps(day_labels),
+            'day_calories':    json.dumps(day_calories),
+            'category_labels': json.dumps(list(category_totals.keys())),
+            'category_data':   json.dumps(list(category_totals.values())),
+            'top_foods':       top_foods,
+            'total_cal_7d':    total_cal_7d,
+            'avg_daily_cal':   avg_daily_cal,
+            'total_meals_7d':  total_meals_7d,
+            'most_active_day': most_active_day,
+            'recent_meals':    recent_meals,
+        }
+
+    # Pass profile + allergies regardless (only populated if resident selected)
+    res_profile  = None
+    res_allergies = []
+    if selected_resident:
+        res_profile, _ = UserProfile.objects.get_or_create(user=selected_resident)
+        res_allergies   = res_profile.allergies.all()
+
+    context = {
+        'residents':         residents,
+        'selected_resident': selected_resident,
+        'stats':             stats,
+        'res_profile':       res_profile,
+        'res_allergies':     res_allergies,
+    }
+    return render(request, 'tracker/patient_food_info.html', context)
+
+
+# ── Messaging: Manager → Resident ─────────────────────────────────────────────
+
+@login_required(login_url='login')
+def send_weekly_review(request):
+    """Manager composes and sends a message/weekly review to a resident."""
+    if not request.user.is_staff:
+        messages.error(request, '🚫 Manager access only.')
+        return redirect('dashboard')
+
+    residents = User.objects.filter(is_staff=False, is_superuser=False).order_by('username')
+
+    if request.method == 'POST':
+        recipient_id = request.POST.get('recipient')
+        subject      = request.POST.get('subject', '').strip() or 'Weekly Review'
+        body         = request.POST.get('body', '').strip()
+
+        if not recipient_id or not body:
+            messages.error(request, 'Please select a resident and write a message.')
+        else:
+            recipient = get_object_or_404(User, id=recipient_id, is_staff=False)
+            ManagerMessage.objects.create(
+                sender=request.user,
+                recipient=recipient,
+                subject=subject,
+                body=body,
+            )
+            messages.success(request, f'✅ Message sent to {recipient.username}!')
+            return redirect('send_weekly_review')
+
+    preselect     = request.GET.get('resident')
+    sent_messages = ManagerMessage.objects.filter(sender=request.user).order_by('-created_at')[:30]
+
+    context = {
+        'residents':     residents,
+        'preselect':     preselect,
+        'sent_messages': sent_messages,
+    }
+    return render(request, 'tracker/send_weekly_review.html', context)
+
+
+@login_required(login_url='login')
+def weekly_review_inbox(request):
+    """Resident views messages sent by their manager — marks all as read on open."""
+    if request.user.is_staff:
+        return redirect('manager_dashboard')
+
+    inbox = ManagerMessage.objects.filter(recipient=request.user)
+    inbox.filter(is_read=False).update(is_read=True)   # mark all read
+
+    context = {'inbox': inbox}
+    return render(request, 'tracker/weekly_review_inbox.html', context)
 
 
 # ── Sign Up ───────────────────────────────────────────────────────────────────
