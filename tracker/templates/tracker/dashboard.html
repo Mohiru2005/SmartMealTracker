@@ -27,7 +27,6 @@
             flex-direction: column;
         }
 
-        /* ── Blobs ──────────────────────────────────────────────── */
         body::before,
         body::after {
             content: '';
@@ -54,7 +53,6 @@
             right: -80px;
         }
 
-        /* ── Top Navbar ─────────────────────────────────────────── */
         .topbar {
             position: fixed;
             top: 0;
@@ -139,17 +137,14 @@
             transform: translateY(-1px);
         }
 
-        /* ── App Shell ──────────────────────────────────────────── */
         .shell {
             display: flex;
             min-height: 100vh;
             padding-top: 62px;
-            /* topbar height */
             position: relative;
             z-index: 1;
         }
 
-        /* ── Sidebar ────────────────────────────────────────────── */
         .sidebar {
             width: 230px;
             flex-shrink: 0;
@@ -232,7 +227,6 @@
             padding-top: 1rem;
         }
 
-        /* ── Main content ───────────────────────────────────────── */
         .main {
             flex: 1;
             margin-left: 230px;
@@ -240,7 +234,6 @@
             min-height: calc(100vh - 62px);
         }
 
-        /* ── Page title ─────────────────────────────────────────── */
         .page-header {
             margin-bottom: 1.75rem;
         }
@@ -262,7 +255,6 @@
             margin-top: 0.25rem;
         }
 
-        /* ── Content panels ─────────────────────────────────────── */
         .content-panel {
             display: none;
             animation: fadeUp 0.3s ease both;
@@ -284,13 +276,13 @@
             }
         }
 
-        /* ── Glass card ─────────────────────────────────────────── */
         .card {
             background: rgba(255, 255, 255, 0.06);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.09);
             border-radius: 1.2rem;
+
             padding: 1.75rem 2rem;
             max-width: 640px;
             box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3);
@@ -307,7 +299,6 @@
             gap: 0.45rem;
         }
 
-        /* ── Form ───────────────────────────────────────────────── */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -374,7 +365,6 @@
             transform: translateY(0);
         }
 
-        /* ── API Messages ─────────────────────────────────────── */
         .msg-banner {
             display: flex;
             align-items: flex-start;
@@ -400,7 +390,6 @@
             color: #fca5a5;
         }
 
-        /* ── Total calorie banner ───────────────────────────────── */
         .total-banner {
             display: flex;
             justify-content: space-between;
@@ -424,7 +413,6 @@
             color: #a78bfa;
         }
 
-        /* ── Meal list ──────────────────────────────────────────── */
         .meal-list {
             list-style: none;
             display: flex;
@@ -494,7 +482,6 @@
             transform: scale(1.06);
         }
 
-        /* ── Empty state ────────────────────────────────────────── */
         .empty-state {
             text-align: center;
             padding: 1.75rem 0 0.5rem;
@@ -508,7 +495,6 @@
             margin-bottom: 0.4rem;
         }
 
-        /* ── Coming-soon placeholder ────────────────────────────── */
         .coming-soon {
             display: flex;
             flex-direction: column;
@@ -546,7 +532,6 @@
             }
         }
 
-        /* ── Responsive ─────────────────────────────────────────── */
         @media (max-width: 700px) {
             .sidebar {
                 width: 60px;
@@ -606,20 +591,20 @@
 
             <span class="sidebar-section-label">Main</span>
 
-            <button class="sidebar-link active" id="nav-meals" onclick="showPanel('meals', this)">
+            <a href="{% url 'dashboard' %}" class="sidebar-link active" id="nav-meals">
                 <span class="icon">🍽️</span>
                 <span>My Meal Dashboard</span>
-            </button>
+            </a>
 
-            <button class="sidebar-link" id="nav-history" onclick="showPanel('history', this)">
-                <span class="icon">📅</span>
-                <span>Meal History</span>
-            </button>
+            <a href="{% url 'track_meals' %}" class="sidebar-link" id="nav-track">
+                <span class="icon">📊</span>
+                <span>Track Meals</span>
+            </a>
 
-            <button class="sidebar-link" id="nav-calories" onclick="showPanel('calories', this)">
-                <span class="icon">🔥</span>
-                <span>Calorie Summary</span>
-            </button>
+            <a href="{% url 'inventory' %}" class="sidebar-link" id="nav-inventory">
+                <span class="icon">📦</span>
+                <span>Inventory</span>
+            </a>
 
             <div class="sidebar-divider"></div>
 
@@ -673,7 +658,6 @@
                     <form method="POST" action="{% url 'dashboard' %}" id="add-meal-form">
                         {% csrf_token %}
                         <div class="form-grid">
-                            <!-- Smart input -->
                             <div class="form-group" style="grid-column: 1 / -1;">
                                 <label for="meal_name">🤖 Meal Description — API auto-calculates calories</label>
                                 <input type="text" id="meal_name" name="meal_name"
@@ -681,7 +665,6 @@
                                     required autocomplete="off">
                             </div>
 
-                            <!-- Divider -->
                             <div style="grid-column:1/-1;display:flex;align-items:center;gap:0.75rem;margin:0.25rem 0;">
                                 <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
                                 <span style="font-size:0.72rem;color:#475569;font-weight:600;letter-spacing:0.05em;">OR
@@ -689,7 +672,6 @@
                                 <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
                             </div>
 
-                            <!-- Manual fallback -->
                             <div class="form-group" style="grid-column: 1 / -1;">
                                 <label for="calories">✏️ Calories (kcal) — fill this to skip the API</label>
                                 <input type="number" id="calories" name="calories"
@@ -729,43 +711,6 @@
                     <div class="empty-state">
                         <span>🍽️</span>
                         No meals logged yet. Add your first meal above!
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- ══ Panel: Meal History ══ -->
-            <div class="content-panel" id="panel-history">
-                <div class="page-header">
-                    <h1>📅 Meal History</h1>
-                    <p>Review all your past meals in one place.</p>
-                </div>
-                <div class="card">
-                    <div class="coming-soon">
-                        <span class="cs-icon">🚧</span>
-                        <h3>Coming Soon</h3>
-                        <p>Full meal history with filters and date grouping is on the way!</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ══ Panel: Calorie Summary ══ -->
-            <div class="content-panel" id="panel-calories">
-                <div class="page-header">
-                    <h1>🔥 Calorie Summary</h1>
-                    <p>Your daily calorie intake at a glance.</p>
-                </div>
-                <div class="card">
-                    {% if meals %}
-                    <div class="total-banner" style="margin-bottom:0;">
-                        <span class="lbl">Total Calories Today</span>
-                        <span class="val">{{ total_calories }} kcal</span>
-                    </div>
-                    {% else %}
-                    <div class="coming-soon">
-                        <span class="cs-icon">📊</span>
-                        <h3>No Data Yet</h3>
-                        <p>Add some meals to see your calorie summary here.</p>
                     </div>
                     {% endif %}
                 </div>
@@ -812,7 +757,6 @@
             clickedBtn.classList.add('active');
         }
     </script>
-
 
 </body>
 
