@@ -1,16 +1,26 @@
+import os
 import re
 import json
 import requests as http_requests
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.db.models import Sum
 from django.utils import timezone
 from .models import Meal, InventoryItem, DailyMeal, UserProfile, UserAllergy, ManagerMessage
 from datetime import timedelta
+import google.generativeai as genai
+
+# Load environment variables from .env file
+load_dotenv()
+
+# ── Gemini AI credentials ─────────────────────────────────────────────────────
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # ── Edamam credentials ────────────────────────────────────────────────────────
 EDAMAM_APP_ID  = '6d6bf9be'
@@ -843,3 +853,191 @@ def update_inventory_item(request, item_id):
         item.save()
         messages.success(request, f"'{item.name}' updated to {qty} {unit}.")
     return redirect('inventory')
+
+
+# ── AI Meal: Standalone Page ─────────────────────────────────────────────────
+
+@login_required(login_url='login')
+def ai_meal_page(request):
+    """Renders the dedicated AI Meal Generator page."""
+    return render(request, 'tracker/ai_meal.html')
+
+
+# ── AI: Generate Meal Recipe (Gemini) ─────────────────────────────────────────
+
+@login_required(login_url='login')
+def generate_ai_meal(request):
+    """POST — Calls Gemini to generate a zero-waste recipe from the user's inventory."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    # 1. Gather available inventory items (quantity > 0)
+    inventory_items = InventoryItem.objects.filter(user=request.user, quantity__gt=0)
+    ingredients_list = [
+        f"{float(item.quantity):g} {item.unit} {item.name}"
+        for item in inventory_items
+    ]
+
+    if not ingredients_list:
+        return JsonResponse(
+            {'error': 'Your inventory is empty! Add some ingredients first before generating a recipe.'},
+            status=400
+        )
+
+    # 2. Gather allergy keywords
+    try:
+        profile = request.user.profile
+        allergy_keywords = profile.get_allergy_keywords()
+    except UserProfile.DoesNotExist:
+        allergy_keywords = []
+
+    # 3. Calculate remaining calorie budget for today
+    today = timezone.localdate()
+    calories_today = (
+        DailyMeal.objects
+        .filter(user=request.user, meal_date=today)
+        .aggregate(total=Sum('calories'))['total'] or 0
+    )
+    calorie_target   = 2000
+    remaining_cal    = max(0, calorie_target - calories_today)
+
+    # 4. Build structured Gemini prompt
+    prompt = f"""System: You are a professional Zero-Waste Chef for a care facility.
+Available Ingredients: {', '.join(ingredients_list)}.
+Resident Allergies: {', '.join(allergy_keywords) if allergy_keywords else 'None'}.
+Calorie Target (remaining today): {remaining_cal} kcal.
+Task: Generate a simple 1-meal recipe name and 3 bullet points of instructions.
+Use ONLY available ingredients. Do NOT use allergens. Keep it simple and nutritious.
+
+Respond ONLY in this exact JSON format (no markdown, no extra text):
+{{
+  "recipe_name": "Name of the dish",
+  "estimated_calories": 450,
+  "instructions": [
+    "First instruction step",
+    "Second instruction step",
+    "Third instruction step"
+  ],
+  "ingredients_used": [
+    {{"name": "ingredient name exactly as listed", "quantity": 100, "unit": "g"}}
+  ]
+}}"""
+
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        # Use the latest Gemini 3 preview model as requested
+        model = genai.GenerativeModel('gemini-3-flash-preview')
+        
+        # Build prompt data
+        inventory_str = ', '.join(ingredients_list)
+        allergy_str   = ', '.join(allergy_keywords) if allergy_keywords else 'None'
+
+        # Debug print requested to verify data flow
+        print(f"DEBUG — AI Generation Context: Inventory: [{inventory_str}], Allergies: [{allergy_str}], Budget: {remaining_cal} kcal")
+        
+        # We still need JSON for the frontend to work
+        final_prompt = f"""Using ONLY these ingredients: {inventory_str}, suggest a recipe. 
+EXCLUDE these allergens: {allergy_str}. 
+Keep it under {remaining_cal} calories. 
+Return a short Name and 3 Steps.
+
+Respond ONLY in JSON:
+{{
+  "recipe_name": "Name",
+  "estimated_calories": integer,
+  "instructions": ["Step 1", "Step 2", "Step 3"],
+  "ingredients_used": [{{"name": "item", "quantity": 0, "unit": "unit"}}]
+}}"""
+
+        response = model.generate_content(final_prompt)
+        raw_text = response.text.strip()
+
+        # Handle potential markdown fences
+        if raw_text.startswith('```'):
+            parts = raw_text.split('```')
+            raw_text = parts[1]
+            if raw_text.startswith('json'):
+                raw_text = raw_text[4:]
+        raw_text = raw_text.strip()
+
+        recipe_data = json.loads(raw_text)
+
+        # Persist in session
+        request.session['ai_recipe'] = recipe_data
+        request.session.modified     = True
+
+        return JsonResponse({'success': True, 'recipe': recipe_data})
+
+    except Exception as e:
+        # User requested specific fallback message
+        return JsonResponse(
+            {'error': '⚠️ Chef is busy! Try again in a moment.'},
+            status=500
+        )
+
+
+# ── AI: Confirm / Cook / Deduct Ingredients ──────────────────────────────────
+
+@login_required(login_url='login')
+def confirm_ai_meal(request):
+    """POST — Deducts AI-recipe ingredients from inventory and logs the meal."""
+    if request.method != 'POST':
+        return redirect('dashboard')
+
+    recipe = request.session.get('ai_recipe')
+    if not recipe:
+        messages.error(request, '⚠️ No AI recipe found in session. Generate one first!')
+        return redirect('dashboard')
+
+    ingredients_used = recipe.get('ingredients_used', [])
+    cooked           = []
+    low_stock        = []
+
+    for ing in ingredients_used:
+        name = ing.get('name', '').strip()
+        qty  = float(ing.get('quantity', 1))
+
+        # Exact match first, then partial
+        inv_item = InventoryItem.objects.filter(
+            user=request.user, name__iexact=name
+        ).first()
+        if not inv_item:
+            inv_item = InventoryItem.objects.filter(
+                user=request.user, name__icontains=name
+            ).first()
+
+        if inv_item:
+            new_qty = float(inv_item.quantity) - qty
+            if new_qty <= 0:
+                inv_item.quantity = 0
+                low_stock.append(inv_item.name)
+            else:
+                inv_item.quantity = round(new_qty, 2)
+            inv_item.save()
+            cooked.append(inv_item.name)
+
+    # Log the cooked meal as today's DailyMeal
+    recipe_name    = recipe.get('recipe_name', 'AI Generated Meal')
+    estimated_cal  = int(recipe.get('estimated_calories', 0))
+    today          = timezone.localdate()
+
+    DailyMeal.objects.create(
+        user      = request.user,
+        name      = recipe_name,
+        calories  = estimated_cal,
+        category  = 'lunch',
+        meal_date = today,
+    )
+
+    # Clear session
+    request.session.pop('ai_recipe', None)
+    request.session.modified = True
+
+    messages.success(
+        request,
+        f'🍳 "{recipe_name}" cooked! Logged {estimated_cal} kcal and updated {len(cooked)} inventory item(s).'
+    )
+    for food in low_stock:
+        messages.warning(request, f'⚠️ {food} is now out of stock!')
+
+    return redirect('track_meals')

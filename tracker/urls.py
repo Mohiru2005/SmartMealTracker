@@ -20,6 +20,11 @@ urlpatterns = [
     path('manager/resident/<int:user_id>/',         views.edit_resident_profile,     name='edit_resident_profile'),
     path('manager/patient-food/',                   views.patient_food_info,         name='patient_food_info'),
     path('manager/send-review/',                    views.send_weekly_review,        name='send_weekly_review'),
-    # ── Resident routes ───────────────────────────────────────────────────────
+    # ── Resident routes ─────────────────────────────────────────────────────────────
     path('weekly-review/',                          views.weekly_review_inbox,       name='weekly_review_inbox'),
+    # ── Gemini AI routes ───────────────────────────────────────────────────────────
+    path('ai-meal/',                                views.ai_meal_page,              name='ai_meal_page'),
+    path('ai-meal/generate/',                       views.generate_ai_meal,          name='generate_ai_meal'),
+    path('ai-meal/confirm/',                        views.confirm_ai_meal,           name='confirm_ai_meal'),
 ]
+

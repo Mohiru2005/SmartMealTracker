@@ -560,7 +560,8 @@
             }
         }
 
-        /* ── Allergy Manager ── */
+        /* ── Allergy Manager ──────────────────────────────────────── */
+
         .allergy-add-row {
             display: flex;
             gap: 0.65rem;
@@ -683,6 +684,286 @@
             margin-bottom: 1.25rem;
             line-height: 1.55;
         }
+
+        /* ── AI Meal Button ── */
+        .btn-ai {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.7rem 1.4rem;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            border: none;
+            border-radius: 0.75rem;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.93rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(124, 58, 237, 0.45);
+            transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+            margin-bottom: 1.5rem;
+            max-width: 640px;
+            width: 100%;
+            justify-content: center;
+            letter-spacing: 0.01em;
+        }
+
+        .btn-ai:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 26px rgba(124, 58, 237, 0.6);
+        }
+
+        .btn-ai:active {
+            transform: translateY(0);
+        }
+
+        .btn-ai:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── AI Modal ── */
+        .ai-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(8px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .ai-modal-overlay.open {
+            display: flex;
+            animation: fadeIn 0.22s ease both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .ai-modal {
+            background: linear-gradient(145deg, #1a1535, #0f0c29);
+            border: 1px solid rgba(124, 58, 237, 0.35);
+            border-radius: 1.4rem;
+            padding: 2rem 2.25rem 1.75rem;
+            max-width: 560px;
+            width: 100%;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(124, 58, 237, 0.15);
+            animation: slideUp 0.28s cubic-bezier(.2, .9, .4, 1) both;
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(28px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .ai-modal-close {
+            position: absolute;
+            top: 1.1rem;
+            right: 1.3rem;
+            background: transparent;
+            border: none;
+            color: #475569;
+            font-size: 1.4rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.15s;
+        }
+
+        .ai-modal-close:hover {
+            color: #e2e8f0;
+        }
+
+        .ai-modal h2 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #a78bfa, #06b6d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.25rem;
+        }
+
+        .ai-modal .ai-sub {
+            font-size: 0.78rem;
+            color: #475569;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Loader shimmer */
+        .ai-loader {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .ai-loader .spinner {
+            display: inline-block;
+            width: 42px;
+            height: 42px;
+            border: 3px solid rgba(124, 58, 237, 0.2);
+            border-top-color: #7c3aed;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .ai-loader p {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        /* Recipe content */
+        .ai-recipe {
+            display: none;
+        }
+
+        .ai-recipe.visible {
+            display: block;
+        }
+
+        .ai-recipe-name {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #e2e8f0;
+            margin-bottom: 0.3rem;
+        }
+
+        .ai-cal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(167, 139, 250, 0.14);
+            border: 1px solid rgba(167, 139, 250, 0.28);
+            border-radius: 999px;
+            padding: 0.2rem 0.75rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #c4b5fd;
+            margin-bottom: 1.1rem;
+        }
+
+        .ai-section-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-steps {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .ai-steps li {
+            display: flex;
+            gap: 0.65rem;
+            align-items: flex-start;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 0.65rem;
+            padding: 0.65rem 0.85rem;
+            font-size: 0.86rem;
+            color: #cbd5e1;
+            line-height: 1.55;
+        }
+
+        .ai-steps li .step-num {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #fff;
+            margin-top: 1px;
+        }
+
+        .ai-ingr-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-bottom: 1.4rem;
+        }
+
+        .ai-chip {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+            border-radius: 999px;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #67e8f9;
+        }
+
+        .btn-cook {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border: none;
+            border-radius: 0.75rem;
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);
+            transition: transform 0.15s, box-shadow 0.15s;
+            letter-spacing: 0.01em;
+        }
+
+        .btn-cook:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.55);
+        }
+
+        /* Error state */
+        .ai-error {
+            display: none;
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 0.75rem;
+            padding: 1rem 1.15rem;
+            color: #fca5a5;
+            font-size: 0.86rem;
+            line-height: 1.6;
+        }
+
+        .ai-error.visible {
+            display: block;
+        }
     </style>
 </head>
 
@@ -728,6 +1009,11 @@
             <a href="{% url 'inventory' %}" class="sidebar-link" id="nav-inventory">
                 <span class="icon">📦</span>
                 <span>Inventory</span>
+            </a>
+
+            <a href="{% url 'ai_meal_page' %}" class="sidebar-link" id="nav-ai">
+                <span class="icon">✨</span>
+                <span>AI Meal Generator</span>
             </a>
 
             <div class="sidebar-divider"></div>
@@ -822,6 +1108,11 @@
                     </form>
                 </div>
 
+                <!-- ✨ AI Meal Generator Button -->
+                <button class="btn-ai" id="btn-ai-generate" onclick="openAIModal()" type="button"
+                    style="margin-bottom: 1.5rem; width: 100%; max-width: none;">
+                    ✨ Generate AI Meal from My Inventory
+                </button>
 
                 <!-- Meal List -->
                 <div class="card">
@@ -980,6 +1271,51 @@
         </main>
     </div>
 
+    <!-- ✨ AI Meal Modal -->
+    <div class="ai-modal-overlay" id="ai-modal-overlay" role="dialog" aria-modal="true"
+        aria-labelledby="ai-modal-title">
+        <div class="ai-modal">
+
+            <button class="ai-modal-close" onclick="closeAIModal()" aria-label="Close modal">×</button>
+
+            <h2 id="ai-modal-title">✨ Zero-Waste AI Chef</h2>
+            <p class="ai-sub">Generating a personalised recipe from your inventory…</p>
+
+            <!-- Loading state -->
+            <div class="ai-loader" id="ai-loader">
+                <div class="spinner"></div>
+                <p>Asking Gemini AI… this takes a moment 🍳</p>
+            </div>
+
+            <!-- Error state -->
+            <div class="ai-error" id="ai-error">
+                <strong>⚠️ Error</strong> — <span id="ai-error-msg"></span>
+            </div>
+
+            <!-- Recipe content -->
+            <div class="ai-recipe" id="ai-recipe">
+
+                <div class="ai-recipe-name" id="ai-recipe-name"></div>
+                <div class="ai-cal-badge">🔥 <span id="ai-recipe-cal"></span> kcal estimated</div>
+
+                <div class="ai-section-label">🧑‍🍳 Instructions</div>
+                <ol class="ai-steps" id="ai-steps"></ol>
+
+                <div class="ai-section-label">🛒 Ingredients Used</div>
+                <div class="ai-ingr-chips" id="ai-ingr-chips"></div>
+
+                <!-- Hidden form that POSTs to confirm_ai_meal -->
+                <form method="POST" action="{% url 'confirm_ai_meal' %}" id="cook-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-cook" id="btn-cook">
+                        🍳 Cook This! — Deduct Ingredients
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
     <script>
         // Auto-calculate BMI from manager-set stats
 
@@ -1022,20 +1358,116 @@
 
 
         function showPanel(name, clickedBtn) {
-            // Hide all panels
             document.querySelectorAll('.content-panel').forEach(function (p) {
                 p.classList.remove('active');
             });
-            // Remove active only from sidebar BUTTONS (not <a> nav links)
             document.querySelectorAll('.sidebar-link').forEach(function (l) {
                 if (l.tagName === 'BUTTON') l.classList.remove('active');
             });
-            // Show target panel
             var panel = document.getElementById('panel-' + name);
             if (panel) panel.classList.add('active');
-            // Mark clicked button active
             if (clickedBtn) clickedBtn.classList.add('active');
         }
+
+        /* ── AI Meal Modal ── */
+        var aiOverlay = document.getElementById('ai-modal-overlay');
+        var aiLoader = document.getElementById('ai-loader');
+        var aiRecipeEl = document.getElementById('ai-recipe');
+        var aiErrorEl = document.getElementById('ai-error');
+        var aiErrorMsg = document.getElementById('ai-error-msg');
+        var aiBtnGen = document.getElementById('btn-ai-generate');
+
+        function openAIModal() {
+            // Reset states
+            aiLoader.style.display = 'block';
+            aiRecipeEl.classList.remove('visible');
+            aiErrorEl.classList.remove('visible');
+            aiOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+
+            // Disable button while loading
+            aiBtnGen.disabled = true;
+            aiBtnGen.textContent = '⏳ Generating…';
+
+            // Get CSRF token from the cook-form (already rendered by Django)
+            var csrf = document.querySelector('#cook-form [name=csrfmiddlewaretoken]').value;
+
+            fetch("{% url 'generate_ai_meal' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrf,
+                    'Content-Type': 'application/json',
+                },
+                body: '{}',
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    aiLoader.style.display = 'none';
+                    aiBtnGen.disabled = false;
+                    aiBtnGen.textContent = '✨ Generate AI Meal from My Inventory';
+
+                    if (data.error) {
+                        aiErrorMsg.textContent = data.error;
+                        aiErrorEl.classList.add('visible');
+                        return;
+                    }
+
+                    var recipe = data.recipe;
+
+                    // Populate name + calories
+                    document.getElementById('ai-recipe-name').textContent = recipe.recipe_name || 'AI-Generated Recipe';
+                    document.getElementById('ai-recipe-cal').textContent = recipe.estimated_calories || '—';
+
+                    // Instructions
+                    var stepsList = document.getElementById('ai-steps');
+                    stepsList.innerHTML = '';
+                    (recipe.instructions || []).forEach(function (step, i) {
+                        var li = document.createElement('li');
+                        var num = document.createElement('span');
+                        num.className = 'step-num';
+                        num.textContent = i + 1;
+                        var txt = document.createElement('span');
+                        txt.textContent = step;
+                        li.appendChild(num);
+                        li.appendChild(txt);
+                        stepsList.appendChild(li);
+                    });
+
+                    // Ingredient chips
+                    var chips = document.getElementById('ai-ingr-chips');
+                    chips.innerHTML = '';
+                    (recipe.ingredients_used || []).forEach(function (ing) {
+                        var chip = document.createElement('span');
+                        chip.className = 'ai-chip';
+                        chip.textContent = ing.quantity + ' ' + ing.unit + ' ' + ing.name;
+                        chips.appendChild(chip);
+                    });
+
+                    aiRecipeEl.classList.add('visible');
+                })
+                .catch(function (err) {
+                    aiLoader.style.display = 'none';
+                    aiBtnGen.disabled = false;
+                    aiBtnGen.textContent = '✨ Generate AI Meal from My Inventory';
+                    aiErrorMsg.textContent = 'Network error — please check your connection and try again.';
+                    aiErrorEl.classList.add('visible');
+                });
+        }
+
+        function closeAIModal() {
+            aiOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // Close on backdrop click
+        aiOverlay.addEventListener('click', function (e) {
+            if (e.target === aiOverlay) closeAIModal();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && aiOverlay.classList.contains('open')) closeAIModal();
+        });
     </script>
 
 </body>
