@@ -31,7 +31,19 @@ ALLOWED_HOSTS = ['*']  # Allow Cloudflare Tunnels
 # Allow Cloudflare Tunnel origins for CSRF protection
 CSRF_TRUSTED_ORIGINS = [
     'https://*.trycloudflare.com',
+    'https://*.cloudflare.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
 ]
+
+CSRF_COOKIE_HTTPONLY = False
+
+# Fix for Cloudflare/Proxy CSRF issues
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 
 # Application definition

@@ -24,6 +24,10 @@ urlpatterns = [
     path('manager/user-inventory/',                 views.manager_inventory_search,  name='manager_inventory_search'),
     path('manager/resident/<int:user_id>/inventory/', views.manager_view_resident_inventory, name='manager_view_resident_inventory'),
     path('manager/resident/<int:resident_id>/export-pdf/', views.export_resident_pdf, name='export_resident_pdf'),
+    path('admin-welcome/',                          views.admin_welcome,             name='admin_welcome'),
+    path('admin/users/create/',                     views.admin_create_user,         name='admin_create_user'),
+    path('admin/users/<int:user_id>/edit/',         views.admin_edit_user,           name='admin_edit_user'),
+    path('admin/users/<int:user_id>/delete/',       views.admin_delete_user,         name='admin_delete_user'),
     # ── Resident routes ─────────────────────────────────────────────────────────────
     path('weekly-review/',                          views.weekly_review_inbox,       name='weekly_review_inbox'),
     # ── Gemini AI routes ───────────────────────────────────────────────────────────

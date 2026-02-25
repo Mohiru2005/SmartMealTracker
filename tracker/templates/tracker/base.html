@@ -42,7 +42,6 @@
             overflow-x: hidden;
         }
 
-        /* Animated Background Blobs */
         body::before,
         body::after {
             content: '';
@@ -69,7 +68,6 @@
             right: -80px;
         }
 
-        /* Topbar */
         .topbar {
             position: fixed;
             top: 0;
@@ -143,7 +141,6 @@
             transform: translateY(-1px);
         }
 
-        /* Layout */
         .page-container {
             flex: 1;
             padding-top: 64px;
@@ -152,7 +149,6 @@
             z-index: 1;
         }
 
-        /* Sidebar */
         .sidebar {
             width: var(--sidebar-width);
             background: rgba(10, 8, 35, 0.4);
@@ -210,7 +206,6 @@
             padding: 1.25rem 1.25rem 0.5rem;
         }
 
-        /* Content Area */
         .content {
             flex: 1;
             padding: 2.5rem 2rem;
@@ -225,7 +220,6 @@
             width: 100%;
         }
 
-        /* Reusable Components */
         .card {
             background: var(--surface);
             backdrop-filter: blur(16px);
@@ -285,22 +279,24 @@
 
 <body>
     <header class="topbar">
-        {% if request.user.is_staff %}
+        {% if request.user.is_superuser %}
+        <a href="{% url 'admin_welcome' %}" class="logo">
+            <div class="logo-icon">🛡️</div> MyMeal Admin
+        </a>
+        {% elif request.user.is_staff %}
         <a href="{% url 'manager_dashboard' %}" class="logo">
-            <div class="logo-icon">🏥</div>
-            MyMeal Care
+            <div class="logo-icon">🏥</div> MyMeal Care
         </a>
         {% else %}
         <a href="{% url 'dashboard' %}" class="logo">
-            <div class="logo-icon">🥗</div>
-            MyMeal
+            <div class="logo-icon">🥗</div> MyMeal
         </a>
         {% endif %}
         <div class="user-nav">
             {% if request.user.is_staff %}
             <span class="badge-count"
-                style="position: static; padding: 0.3rem 0.75rem; background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2);">🛡️
-                Manager</span>
+                style="position: static; padding: 0.3rem 0.75rem; background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2);">
+                {% if request.user.is_superuser %}🛡️ Admin{% else %}🛡️ Manager{% endif %}</span>
             {% endif %}
             <span class="username">👤 {{ request.user.username }}</span>
             <a href="{% url 'logout' %}" class="btn-logout">Logout</a>
@@ -310,8 +306,19 @@
     <div class="page-container">
         {% if request.user.is_authenticated %}
         <aside class="sidebar">
-            {% if request.user.is_staff %}
-            <span class="sidebar-section-title">Care Management</span>
+            {% if request.user.is_superuser %}
+            <span class="sidebar-section-title" style="color: var(--accent);">🛡️ ADMIN ONLY</span>
+            <a href="{% url 'admin_welcome' %}"
+                class="sidebar-link {% if request.resolver_match.url_name == 'admin_welcome' %}active{% endif %}">
+                <i>🛡️</i> <span>Admin Dashboard</span>
+            </a>
+            <a href="/admin/" class="sidebar-link" target="_blank">
+                <i>⚙️</i> <span>System Database</span>
+            </a>
+            {% endif %}
+
+            {% if not request.user.is_superuser and request.user.is_staff %}
+            <span class="sidebar-section-title" style="color: var(--success); margin-top: 1rem;">🛡️ MANAGER ONLY</span>
             <a href="{% url 'manager_dashboard' %}"
                 class="sidebar-link {% if request.resolver_match.url_name == 'manager_dashboard' %}active{% endif %}">
                 <i>🏥</i> <span>Resident List</span>
@@ -328,14 +335,11 @@
                 class="sidebar-link {% if request.resolver_match.url_name == 'send_weekly_review' %}active{% endif %}">
                 <i>📨</i> <span>Send Review</span>
             </a>
-
-            <span class="sidebar-section-title">System</span>
-            {% if request.user.is_superuser %}
-            <a href="/admin/" class="sidebar-link" target="_blank">
-                <i>⚙️</i> <span>Django Admin</span>
-            </a>
             {% endif %}
-            {% else %}
+
+            {% if not request.user.is_staff %}
+            {% if request.user.username != 'manager' %}
+            {% if request.user.username != 'Manager' %}
             <span class="sidebar-section-title">Navigation</span>
             <a href="{% url 'dashboard' %}"
                 class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
@@ -353,7 +357,6 @@
                 class="sidebar-link {% if request.resolver_match.url_name == 'ai_meal_page' %}active{% endif %}">
                 <i>✨</i> <span>AI Personal Chef</span>
             </a>
-
             <span class="sidebar-section-title">Health & Safety</span>
             <a href="{% url 'weekly_review_inbox' %}"
                 class="sidebar-link {% if request.resolver_match.url_name == 'weekly_review_inbox' %}active{% endif %}">
@@ -367,6 +370,8 @@
                 class="sidebar-link {% if request.resolver_match.url_name == 'manage_allergies' %}active{% endif %}">
                 <i>👤</i> <span>Profile</span>
             </a>
+            {% endif %}
+            {% endif %}
             {% endif %}
         </aside>
         {% endif %}

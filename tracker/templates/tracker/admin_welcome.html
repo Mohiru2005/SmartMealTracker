@@ -1,0 +1,550 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}System Administration - MyMeal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-hero {
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(59, 130, 246, 0.1));
+        border-radius: 2rem;
+        border: 1px solid var(--border);
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .admin-hero::after {
+        content: 'ADMIN';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 12rem;
+        font-weight: 900;
+        color: rgba(255, 255, 255, 0.02);
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .admin-title {
+        font-size: 2.8rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(90deg, #fff, var(--accent));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        position: relative;
+        z-index: 1;
+    }
+
+    .admin-subtitle {
+        font-size: 1.1rem;
+        color: var(--muted);
+        position: relative;
+        z-index: 1;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .stat-val {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+    }
+
+    .stat-lab {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+    }
+
+    /* Section headings */
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    /* User table */
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .user-table th {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .user-table td {
+        padding: 0.9rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        vertical-align: middle;
+    }
+
+    .user-table tr:hover td {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .user-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+
+    .badge-manager {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-resident {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .badge-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #34d399;
+    }
+
+    .badge-inactive {
+        background: rgba(239, 68, 68, 0.1);
+        color: #f87171;
+    }
+
+    /* Buttons */
+    .btn-sm {
+        padding: 0.35rem 0.85rem;
+        border-radius: 0.6rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-edit {
+        background: rgba(124, 58, 237, 0.2);
+        color: var(--accent);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+    }
+
+    .btn-delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-edit:hover {
+        background: rgba(124, 58, 237, 0.35);
+    }
+
+    .btn-delete:hover {
+        background: rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: #fff;
+        border: none;
+        padding: 0.65rem 1.4rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(6px);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.open {
+        display: flex;
+    }
+
+    .modal-box {
+        background: #1a1635;
+        border: 1px solid var(--border);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 460px;
+        position: relative;
+    }
+
+    .modal-title {
+        font-size: 1.4rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        color: #fff;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 1.2rem;
+        right: 1.5rem;
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .form-group {
+        margin-bottom: 1.1rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--muted);
+        margin-bottom: 0.4rem;
+    }
+
+    .form-input,
+    .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        color: #fff;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+        border-color: var(--accent);
+    }
+
+    .form-select option {
+        background: #1a1635;
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.88rem;
+        color: var(--muted);
+    }
+
+    .alert {
+        padding: 0.9rem 1.2rem;
+        border-radius: 0.8rem;
+        margin-bottom: 1.2rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+    }
+
+    .alert-success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #34d399;
+    }
+
+    .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert {% if 'error' in msg.tags or '🚫' in msg.message %}alert-error{% else %}alert-success{% endif %}">{{
+    msg }}</div>
+{% endfor %}
+{% endif %}
+
+<!-- Hero -->
+<div class="admin-hero">
+    <h1 class="admin-title">🛡️ ADMIN ONLY Area</h1>
+    <p class="admin-subtitle">System Hub & Master Configuration Oversight</p>
+</div>
+
+<!-- Stat Cards -->
+<div class="stats-grid">
+    <div class="card stat-card">
+        <span class="stat-val">{{ user_count }}</span>
+        <span class="stat-lab">Total Accounts</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-val" style="color: var(--success);">{{ manager_count }}</span>
+        <span class="stat-lab">Managers</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-val" style="color: var(--accent);">{{ resident_count }}</span>
+        <span class="stat-lab">Residents</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-val">{{ meal_log_count }}</span>
+        <span class="stat-lab">Meals Logged</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-val">{{ inventory_items }}</span>
+        <span class="stat-lab">Inventory Items</span>
+    </div>
+</div>
+
+<!-- ── Managers Table ── -->
+<div class="card">
+    <div class="section-header">
+        <span class="section-title">🛡️ Managers <span style="color:var(--muted); font-size:0.85rem;">({{ manager_count
+                }})</span></span>
+        <button class="btn-primary" onclick="openCreate('manager')">+ Add Manager</button>
+    </div>
+    {% if managers %}
+    <table class="user-table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Status</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in managers %}
+            <tr>
+                <td style="font-weight:600; color:#fff;">{{ u.username }}</td>
+                <td>
+                    {% if u.is_active %}<span class="badge badge-active">Active</span>
+                    {% else %}<span class="badge badge-inactive">Inactive</span>{% endif %}
+                </td>
+                <td><span class="badge badge-manager">Manager</span></td>
+                <td style="display:flex; gap:0.5rem;">
+                    <button class="btn-sm btn-edit"
+                        onclick="openEdit({{ u.id }}, '{{ u.username }}', 'manager', {{ u.is_active|yesno:'true,false' }})">✏️
+                        Edit</button>
+                    <button class="btn-sm btn-delete" onclick="openDelete({{ u.id }}, '{{ u.username }}')">🗑️
+                        Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--muted); text-align:center; padding:1rem;">No managers yet. Add one above.</p>
+    {% endif %}
+</div>
+
+<!-- ── Residents Table ── -->
+<div class="card">
+    <div class="section-header">
+        <span class="section-title">👤 Residents <span style="color:var(--muted); font-size:0.85rem;">({{ resident_count
+                }})</span></span>
+        <button class="btn-primary" onclick="openCreate('resident')">+ Add Resident</button>
+    </div>
+    {% if residents %}
+    <table class="user-table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Status</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in residents %}
+            <tr>
+                <td style="font-weight:600; color:#fff;">{{ u.username }}</td>
+                <td>
+                    {% if u.is_active %}<span class="badge badge-active">Active</span>
+                    {% else %}<span class="badge badge-inactive">Inactive</span>{% endif %}
+                </td>
+                <td><span class="badge badge-resident">Resident</span></td>
+                <td style="display:flex; gap:0.5rem;">
+                    <button class="btn-sm btn-edit"
+                        onclick="openEdit({{ u.id }}, '{{ u.username }}', 'resident', {{ u.is_active|yesno:'true,false' }})">✏️
+                        Edit</button>
+                    <button class="btn-sm btn-delete" onclick="openDelete({{ u.id }}, '{{ u.username }}')">🗑️
+                        Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--muted); text-align:center; padding:1rem;">No residents registered yet.</p>
+    {% endif %}
+</div>
+
+<!-- Quick Links -->
+<div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:2rem;">
+    <a href="/admin/" target="_blank" class="btn-primary" style="text-decoration:none;">⚙️ Django Admin Console</a>
+</div>
+
+<!-- ── CREATE Modal ── -->
+<div id="createModal" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('createModal')">✕</button>
+        <h2 class="modal-title">➕ Create New User</h2>
+        <form method="POST" action="{% url 'admin_create_user' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input id="create-username" name="username" type="text" class="form-input" placeholder="e.g. nurse_jane"
+                    required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input name="password" type="password" class="form-input" placeholder="Min. 8 characters" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Role</label>
+                <select id="create-role" name="role" class="form-select">
+                    <option value="resident">Resident</option>
+                    <option value="manager">Manager</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-primary" style="width:100%; margin-top:0.5rem;">Create User</button>
+        </form>
+    </div>
+</div>
+
+<!-- ── EDIT Modal ── -->
+<div id="editModal" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+        <h2 class="modal-title">✏️ Edit User: <span id="edit-name" style="color:var(--accent);"></span></h2>
+        <form method="POST" id="editForm" action="">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">New Password <span style="font-weight:400;">(leave blank to keep
+                        current)</span></label>
+                <input name="password" type="password" class="form-input" placeholder="New password...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Role</label>
+                <select id="edit-role" name="role" class="form-select">
+                    <option value="resident">Resident</option>
+                    <option value="manager">Manager</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-check">
+                    <input type="checkbox" id="edit-active" name="active"> Account Active
+                </label>
+            </div>
+            <button type="submit" class="btn-primary" style="width:100%; margin-top:0.5rem;">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<!-- ── DELETE Confirm Modal ── -->
+<div id="deleteModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:380px; text-align:center;">
+        <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+        <div style="font-size:3rem; margin-bottom:1rem;">🗑️</div>
+        <h2 class="modal-title">Delete User?</h2>
+        <p style="color:var(--muted); margin-bottom:1.5rem;">
+            Are you sure you want to delete <strong id="delete-name" style="color:#f87171;"></strong>?
+            This action cannot be undone.
+        </p>
+        <form method="POST" id="deleteForm" action="">
+            {% csrf_token %}
+            <div style="display:flex; gap:0.75rem; justify-content:center;">
+                <button type="button" onclick="closeModal('deleteModal')" class="btn-sm btn-edit"
+                    style="padding:0.6rem 1.4rem;">Cancel</button>
+                <button type="submit" class="btn-sm btn-delete" style="padding:0.6rem 1.4rem;">Yes, Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openCreate(role) {
+        document.getElementById('create-role').value = role;
+        document.getElementById('create-username').value = '';
+        document.getElementById('createModal').classList.add('open');
+    }
+    function openEdit(id, username, role, isActive) {
+        document.getElementById('edit-name').textContent = username;
+        document.getElementById('edit-role').value = role;
+        document.getElementById('edit-active').checked = isActive;
+        document.getElementById('editForm').action = '/admin/users/' + id + '/edit/';
+        document.getElementById('editModal').classList.add('open');
+    }
+    function openDelete(id, username) {
+        document.getElementById('delete-name').textContent = username;
+        document.getElementById('deleteForm').action = '/admin/users/' + id + '/delete/';
+        document.getElementById('deleteModal').classList.add('open');
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('open');
+    }
+    // Close on backdrop click
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+        el.addEventListener('click', function (e) {
+            if (e.target === this) closeModal(this.id);
+        });
+    });
+</script>
+{% endblock %}

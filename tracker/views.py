@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Sum
 from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from .models import Meal, InventoryItem, DailyMeal, UserProfile, UserAllergy, ManagerMessage
 from datetime import timedelta
 import google.generativeai as genai
@@ -133,6 +134,10 @@ def _get_health_suggestion(total_calories: int) -> dict:
 
 def welcome(request):
     if request.user.is_authenticated:
+        if request.user.is_superuser:
+            return redirect('admin_welcome')
+        if request.user.is_staff or request.user.username.lower() == 'manager':
+            return redirect('manager_dashboard')
         return redirect('dashboard')
     return render(request, 'tracker/index.html')
 
@@ -494,8 +499,9 @@ def delete_tracked_meal(request, meal_id):
 
 @login_required(login_url='login')
 def manager_dashboard(request):
-    """Only accessible by staff (is_staff=True) — lists all non-staff residents."""
-    if not request.user.is_staff:
+    """Accessible by staff (is_staff=True) or specific 'manager' user."""
+    is_manager = request.user.is_staff or request.user.username.lower() == 'manager'
+    if not is_manager:
         messages.error(request, '🚫 Access denied. Manager access only.')
         return redirect('dashboard')
 
@@ -531,7 +537,8 @@ def manager_dashboard(request):
 @login_required(login_url='login')
 def edit_resident_profile(request, user_id):
     """Manager edits a specific resident's medical profile and allergy keywords."""
-    if not request.user.is_staff:
+    is_manager = request.user.is_staff or request.user.username.lower() == 'manager'
+    if not is_manager:
         messages.error(request, '🚫 Access denied. Manager access only.')
         return redirect('dashboard')
 
@@ -602,7 +609,8 @@ def edit_resident_profile(request, user_id):
 @login_required(login_url='login')
 def patient_food_info(request):
     """Manager views food statistics for a selected resident."""
-    if not request.user.is_staff:
+    is_manager = request.user.is_staff or request.user.username.lower() == 'manager'
+    if not is_manager:
         messages.error(request, '🚫 Access denied. Manager access only.')
         return redirect('dashboard')
 
@@ -749,7 +757,8 @@ def export_resident_pdf(request, resident_id):
 @login_required(login_url='login')
 def send_weekly_review(request):
     """Manager composes and sends a message/weekly review to a resident."""
-    if not request.user.is_staff:
+    is_manager = request.user.is_staff or request.user.username.lower() == 'manager'
+    if not is_manager:
         messages.error(request, '🚫 Manager access only.')
         return redirect('dashboard')
 
@@ -816,20 +825,118 @@ def signup_view(request):
 
 # ── Login ─────────────────────────────────────────────────────────────────────
 
+@csrf_protect
+@ensure_csrf_cookie
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('manager_dashboard' if request.user.is_staff else 'dashboard')
+        if request.user.is_superuser:
+            return redirect('admin_welcome')
+        if request.user.is_staff or request.user.username.lower() == 'manager':
+            return redirect('manager_dashboard')
+        return redirect('dashboard')
 
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            # Staff → Manager Dashboard, residents → regular Dashboard
-            return redirect('manager_dashboard' if user.is_staff else 'dashboard')
+            # 1. Admin -> Admin Welcome
+            if user.is_superuser:
+                return redirect('admin_welcome')
+            # 2. Manager account or anyone with staff perms -> Manager Dashboard
+            if user.is_staff or user.username.lower() == 'manager':
+                return redirect('manager_dashboard')
+            # 3. Regular residents -> Dashboard
+            return redirect('dashboard')
     else:
         form = AuthenticationForm()
     return render(request, 'tracker/login.html', {'form': form})
+
+
+@login_required(login_url='login')
+def admin_welcome(request):
+    """Custom dashboard for superusers with full user management."""
+    if not request.user.is_superuser:
+        messages.error(request, '🚫 Access denied. Admin access only.')
+        return redirect('manager_dashboard' if request.user.is_staff else 'dashboard')
+
+    managers = User.objects.filter(is_staff=True, is_superuser=False).order_by('username')
+    residents = User.objects.filter(is_staff=False, is_superuser=False).order_by('username')
+    meal_log_count = DailyMeal.objects.count()
+    inventory_items = InventoryItem.objects.count()
+
+    context = {
+        'user_count': User.objects.count(),
+        'manager_count': managers.count(),
+        'resident_count': residents.count(),
+        'meal_log_count': meal_log_count,
+        'inventory_items': inventory_items,
+        'managers': managers,
+        'residents': residents,
+    }
+    return render(request, 'tracker/admin_welcome.html', context)
+
+
+@login_required(login_url='login')
+def admin_create_user(request):
+    """Superuser-only: create a new manager or resident account."""
+    if not request.user.is_superuser:
+        messages.error(request, '🚫 Access denied.')
+        return redirect('admin_welcome')
+    if request.method == 'POST':
+        username  = request.POST.get('username', '').strip()
+        password  = request.POST.get('password', '').strip()
+        role      = request.POST.get('role', 'resident')
+        if not username or not password:
+            messages.error(request, 'Username and password are required.')
+            return redirect('admin_welcome')
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f'Username "{username}" is already taken.')
+            return redirect('admin_welcome')
+        user = User.objects.create_user(username=username, password=password)
+        if role == 'manager':
+            user.is_staff = True
+        user.save()
+        messages.success(request, f'✅ User "{username}" created as {role}.')
+    return redirect('admin_welcome')
+
+
+@login_required(login_url='login')
+def admin_edit_user(request, user_id):
+    """Superuser-only: edit an existing user."""
+    if not request.user.is_superuser:
+        messages.error(request, '🚫 Access denied.')
+        return redirect('admin_welcome')
+    target = get_object_or_404(User, pk=user_id)
+    if request.method == 'POST':
+        role     = request.POST.get('role', 'resident')
+        password = request.POST.get('password', '').strip()
+        active   = request.POST.get('active') == 'on'
+        target.is_staff     = (role == 'manager')
+        target.is_superuser = False           # never accidentally promote via this form
+        target.is_active    = active
+        if password:
+            target.set_password(password)
+        target.save()
+        messages.success(request, f'✅ User "{target.username}" updated.')
+    return redirect('admin_welcome')
+
+
+@login_required(login_url='login')
+def admin_delete_user(request, user_id):
+    """Superuser-only: delete a user."""
+    if not request.user.is_superuser:
+        messages.error(request, '🚫 Access denied.')
+        return redirect('admin_welcome')
+    target = get_object_or_404(User, pk=user_id)
+    if target == request.user:
+        messages.error(request, '🚫 You cannot delete yourself.')
+        return redirect('admin_welcome')
+    if request.method == 'POST':
+        username = target.username
+        target.delete()
+        messages.success(request, f'🗑️ User "{username}" deleted.')
+    return redirect('admin_welcome')
 
 
 # ── Logout ────────────────────────────────────────────────────────────────────
@@ -1114,7 +1221,8 @@ def confirm_ai_meal(request):
 @login_required(login_url='login')
 def manager_inventory_search(request):
     """Manager views a list of all residents to select one for inventory check."""
-    if not request.user.is_staff:
+    is_manager = request.user.is_staff or request.user.username.lower() == 'manager'
+    if not is_manager:
         messages.error(request, '🚫 Access denied. Manager access only.')
         return redirect('dashboard')
 
@@ -1127,7 +1235,8 @@ def manager_inventory_search(request):
 @login_required(login_url='login')
 def manager_view_resident_inventory(request, user_id):
     """Manager views a specific resident's current inventory items."""
-    if not request.user.is_staff:
+    is_manager = request.user.is_staff or request.user.username.lower() == 'manager'
+    if not is_manager:
         messages.error(request, '🚫 Access denied. Manager access only.')
         return redirect('dashboard')
 
